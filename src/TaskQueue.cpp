@@ -15,9 +15,13 @@ namespace
 //##################################################################################################
 struct TaskDetails_lt
 {
+  TP_NONCOPYABLE(TaskDetails_lt);
+
   Task* task{nullptr};
   int64_t nextRun{0};
   bool active{false};
+
+  TaskDetails_lt()=default;
 
   ~TaskDetails_lt()
   {
