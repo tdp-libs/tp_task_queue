@@ -47,8 +47,6 @@ struct TaskQueue::Private
   std::vector<std::thread*> threads;
   std::atomic_bool finish{false};
 
-
-
   //################################################################################################
   void taskStatusChanged()
   {
