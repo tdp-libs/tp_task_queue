@@ -1,6 +1,7 @@
 #include "tp_task_queue/Task.h"
 
 #include "tp_utils/MutexUtils.h"
+#include "tp_utils/DebugUtils.h"
 
 #include <atomic>
 
