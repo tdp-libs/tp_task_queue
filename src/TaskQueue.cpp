@@ -130,7 +130,7 @@ TaskQueue::TaskQueue(int nThreads):
           bool keep = taskDetails->task->performTask();
           d->mutex.lock(TPM);
 
-          if(taskDetails->task->timeout()<1 || !keep)
+          if(taskDetails->task->timeoutMS()<1 || !keep)
           {
             tpRemoveOne(d->tasks, taskDetails);
             d->mutex.unlock(TPM);
@@ -142,8 +142,8 @@ TaskQueue::TaskQueue(int nThreads):
           }
           else
           {
-            if(taskDetails->task->timeout()>0)
-              taskDetails->nextRun = tp_utils::currentTimeMS() + taskDetails->task->timeout();
+            if(taskDetails->task->timeoutMS()>0)
+              taskDetails->nextRun = tp_utils::currentTimeMS() + taskDetails->task->timeoutMS();
             taskDetails->active = false;
           }
           break;

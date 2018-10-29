@@ -75,13 +75,13 @@ const std::string& Task::taskName() const
 }
 
 //##################################################################################################
-int64_t Task::timeout() const
+int64_t Task::timeoutMS() const
 {
   return d->timeout;
 }
 
 //##################################################################################################
-void Task::setTimeout(int64_t timeout)
+void Task::setTimeoutMS(int64_t timeout)
 {
   d->timeout = timeout;;
 }

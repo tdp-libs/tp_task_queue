@@ -40,9 +40,9 @@ public:
 
   \param taskName A user visible name for the task.
   \param performTask A function to call to perform the task.
-  \param timeout If this is positive the task will be rerun at this interval.
+  \param timeoutMS If this is positive the task will be rerun at this interval.
   */
-  Task(const std::string& taskName, const std::function<bool(Task&)>& performTask, int64_t timeout=0, const std::string& timeoutMessage=std::string(), bool pauseable=false);
+  Task(const std::string& taskName, const std::function<bool(Task&)>& performTask, int64_t timeoutMS=0, const std::string& timeoutMessage=std::string(), bool pauseable=false);
 
   //################################################################################################
   ~Task();
@@ -55,10 +55,10 @@ public:
   const std::string& taskName() const;
 
   //################################################################################################
-  int64_t timeout() const;
+  int64_t timeoutMS() const;
 
   //################################################################################################
-  void setTimeout(int64_t timeout);
+  void setTimeoutMS(int64_t timeoutMS);
 
   //################################################################################################
   const std::string& timeoutMessage() const;
