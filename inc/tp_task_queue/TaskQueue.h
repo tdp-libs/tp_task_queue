@@ -11,7 +11,7 @@ class TP_TASK_QUEUE_SHARED_EXPORT TaskQueue
 {
 public:
   //################################################################################################
-  TaskQueue(int nThreads=1);
+  TaskQueue(const std::string& threadName, int nThreads=1);
 
   //################################################################################################
   ~TaskQueue();

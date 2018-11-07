@@ -4,6 +4,8 @@
 #include "tp_utils/TimeUtils.h"
 #include "tp_utils/DebugUtils.h"
 
+#include "lib_platform/SetThreadName.h"
+
 #include <atomic>
 #include <thread>
 
@@ -33,19 +35,28 @@ struct TaskDetails_lt
 //##################################################################################################
 struct TaskQueue::Private
 {
-  TPMutex mutex;
+  std::string threadName;
+
+  TPMutex mutex{TPM};
   TPWaitCondition waitCondition;
   TPWaitCondition updateWaitingMessagesWaitCondition;
   std::vector<TaskDetails_lt*> tasks;
 
-  TPMutex taskStatusMutex;
+  TPMutex taskStatusMutex{TPM};
   std::vector<TaskStatus> taskStatuses;
 
-  TPMutex statusChangedCallbacksMutex;
+  TPMutex statusChangedCallbacksMutex{TPM};
   std::vector<const std::function<void()>*> statusChangedCallbacks;
 
   std::vector<std::thread*> threads;
   std::atomic_bool finish{false};
+
+  //################################################################################################
+  Private(const std::string& threadName_):
+    threadName(threadName_)
+  {
+
+  }
 
   //################################################################################################
   void taskStatusChanged()
@@ -95,13 +106,14 @@ struct TaskQueue::Private
 };
 
 //##################################################################################################
-TaskQueue::TaskQueue(int nThreads):
-  d(new Private())
+TaskQueue::TaskQueue(const std::string& threadName, int nThreads):
+  d(new Private(threadName))
 {
   for(int i=0; i<nThreads; i++)
   {
     d->threads.push_back(new std::thread([&]()
     {
+      lib_platform::setThreadName(d->threadName);
       d->mutex.lock(TPM);
       while(!d->finish)
       {
@@ -150,7 +162,7 @@ TaskQueue::TaskQueue(int nThreads):
         }
 
         if(!workDone)
-          d->waitCondition.wait(d->mutex, waitFor);
+          d->waitCondition.wait(TPMc d->mutex, waitFor);
       }
       d->mutex.unlock(TPM);
     }));
@@ -158,10 +170,12 @@ TaskQueue::TaskQueue(int nThreads):
 
   d->threads.push_back(new std::thread([&]()
   {
+    lib_platform::setThreadName("#"+d->threadName);
+
     d->mutex.lock(TPM);
     while(!d->finish)
     {
-      d->updateWaitingMessagesWaitCondition.wait(d->mutex, 1000);
+      d->updateWaitingMessagesWaitCondition.wait(TPMc d->mutex, 1000);
       d->mutex.unlock(TPM);
       d->updateWaitingMessages();
       d->mutex.lock(TPM);
