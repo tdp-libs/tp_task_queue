@@ -11,10 +11,16 @@ class TP_TASK_QUEUE_SHARED_EXPORT TaskQueue
 {
 public:
   //################################################################################################
-  TaskQueue(const std::string& threadName, int nThreads=1);
+  TaskQueue(const std::string& threadName, size_t nThreads=1);
 
   //################################################################################################
   ~TaskQueue();
+
+  //################################################################################################
+  size_t numberOfTaskThreads() const;
+
+  //################################################################################################
+  void setNumberOfTaskThreads(size_t numberOfTaskThreads);
 
   //################################################################################################
   //! Add a task to the queue to be processed.
