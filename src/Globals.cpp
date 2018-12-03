@@ -1,7 +1,7 @@
 #include "tp_task_queue/Globals.h"
 
 //##################################################################################################
-namespace tp_maps
+namespace tp_task_queue
 {
 
 }
