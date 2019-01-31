@@ -3,7 +3,7 @@ TEMPLATE = lib
 
 DEFINES += TP_TASK_QUEUE_LIBRARY
 
-SOURCES += src/Globals.cpp
+#SOURCES += src/Globals.cpp
 HEADERS += inc/tp_task_queue/Globals.h
 
 SOURCES += src/TaskQueue.cpp
