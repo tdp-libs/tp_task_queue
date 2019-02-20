@@ -1,4 +1,5 @@
 #include "tp_task_queue/Task.h"
+#include "tp_task_queue/SynchronizationPoint.h"
 
 #include "tp_utils/MutexUtils.h"
 
@@ -17,6 +18,8 @@ struct Task::Private
   std::string timeoutMessage;
 
   std::function<void(const TaskStatus&)> statusChangedCallback;
+
+  SynchronizationPoint* synchronizationPoint{nullptr};
 
   TaskQueue* taskQueue{nullptr};
 
@@ -59,6 +62,8 @@ Task::Task(const std::string& taskName, const std::function<bool(Task&)>& perfor
 //##################################################################################################
 Task::~Task()
 {
+  if(d->synchronizationPoint)
+    d->synchronizationPoint->removeTask();
   delete d;
 }
 
@@ -187,6 +192,12 @@ void Task::setTaskQueue(TaskQueue* taskQueue)
 TaskQueue* Task::taskQueue()const
 {
   return d->taskQueue;
+}
+
+//##################################################################################################
+void Task::setSynchronizationPoint(SynchronizationPoint* synchronizationPoint)
+{
+  d->synchronizationPoint = synchronizationPoint;
 }
 
 }

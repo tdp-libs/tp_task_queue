@@ -11,6 +11,7 @@
 namespace tp_task_queue
 {
 class TaskQueue;
+class SynchronizationPoint;
 
 //##################################################################################################
 //! The status of a running task.
@@ -39,7 +40,7 @@ public:
   Constructs a task that can be added to a task queue for processing.
 
   \param taskName A user visible name for the task.
-  \param performTask A function to call to perform the task.
+  \param performTask A function to call to perform the task, return true to rerun the task.
   \param timeoutMS If this is positive the task will be rerun at this interval.
   */
   Task(const std::string& taskName, const std::function<bool(Task&)>& performTask, int64_t timeoutMS=0, const std::string& timeoutMessage=std::string(), bool pauseable=false);
@@ -108,6 +109,9 @@ public:
   TaskQueue* taskQueue()const;
 
 private:
+  friend class SynchronizationPoint;
+  void setSynchronizationPoint(SynchronizationPoint* synchronizationPoint);
+
   struct Private;
   friend struct Private;
   Private* d;
