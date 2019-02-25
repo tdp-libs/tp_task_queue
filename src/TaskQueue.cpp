@@ -16,6 +16,7 @@ namespace
 //##################################################################################################
 struct TaskDetails_lt
 {
+  TDP_REF_COUNT_OBJECTS("TaskDetails_lt");
   TP_NONCOPYABLE(TaskDetails_lt);
 
   Task* task{nullptr};
@@ -51,7 +52,7 @@ struct TaskQueue::Private
 
   size_t numberOfTaskThreads;
   size_t numberOfActiveTaskThreads{0};
-  std::thread adminThread;
+  std::unique_ptr<std::thread> adminThread;
   std::atomic_bool finish{false};
 
   //################################################################################################
@@ -187,7 +188,7 @@ TaskQueue::TaskQueue(const std::string& threadName, size_t nThreads):
   TP_MUTEX_LOCKER(d->mutex);
   d->addThreads();
 
-  d->adminThread = std::thread([&]()
+  d->adminThread = std::make_unique<std::thread>([&]()
   {
     lib_platform::setThreadName("#"+d->threadName);
 
@@ -218,7 +219,8 @@ TaskQueue::~TaskQueue()
     d->mutex.unlock(TPM);
   }
 
-  d->adminThread.join();
+  d->adminThread->join();
+  d->adminThread.reset();
 
   {
     d->mutex.lock(TPM);
