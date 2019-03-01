@@ -10,7 +10,7 @@ namespace tp_task_queue
 struct SynchronizationPoint::Private
 {
   size_t count{0};
-  TPMutex mutex;
+  TPMutex mutex{TPM};
   TPWaitCondition waitCondition;
 };
 
@@ -27,7 +27,7 @@ SynchronizationPoint::~SynchronizationPoint()
   {
     TP_MUTEX_LOCKER(d->mutex);
     while(d->count>0)
-      d->waitCondition.wait(d->mutex);
+      d->waitCondition.wait(TPMc d->mutex);
   }
 
   delete d;
@@ -39,7 +39,7 @@ void SynchronizationPoint::addTask(Task* task, size_t maxActive)
   task->setSynchronizationPoint(this);
   TP_MUTEX_LOCKER(d->mutex);
   while(d->count>maxActive)
-    d->waitCondition.wait(d->mutex);
+    d->waitCondition.wait(TPMc d->mutex);
   d->count++;
 }
 
