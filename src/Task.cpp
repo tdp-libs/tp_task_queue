@@ -13,7 +13,7 @@ struct Task::Private
 {
   int64_t taskID{generateTaskID()};
   std::string taskName;
-  std::function<bool(Task&)> performTask;
+  TaskCallback performTask;
   int64_t timeout;
   std::string timeoutMessage;
 
@@ -31,9 +31,9 @@ struct Task::Private
   std::atomic_bool paused{false};
 
   //################################################################################################
-  Private(std::string taskName_, std::function<bool(Task&)> performTask_, int64_t timeout_, std::string timeoutMessage_, bool pauseable_):
+  Private(std::string taskName_, const TaskCallback& performTask_, int64_t timeout_, std::string timeoutMessage_, bool pauseable_):
     taskName(std::move(taskName_)),
-    performTask(std::move(performTask_)),
+    performTask(performTask_),
     timeout(timeout_),
     timeoutMessage(std::move(timeoutMessage_)),
     pauseable(pauseable_)
@@ -53,7 +53,7 @@ struct Task::Private
 };
 
 //##################################################################################################
-Task::Task(const std::string& taskName, const std::function<bool(Task&)>& performTask, int64_t timeout, const std::string& timeoutMessage, bool pauseable):
+Task::Task(const std::string& taskName, const TaskCallback& performTask, int64_t timeout, const std::string& timeoutMessage, bool pauseable):
   d(new Private(taskName, performTask, timeout, timeoutMessage, pauseable))
 {
 
@@ -131,7 +131,7 @@ void Task::cancelTask()
 }
 
 //##################################################################################################
-bool Task::performTask()
+RunAgain Task::performTask()
 {
   return d->performTask(*this);
 }

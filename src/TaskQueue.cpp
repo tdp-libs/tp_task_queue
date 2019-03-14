@@ -146,12 +146,25 @@ struct TaskQueue::Private
 
             mutex.unlock(TPM);
             workDone = true;
-            bool keep = taskDetails->task->performTask();
+            auto runAgain = taskDetails->task->performTask();
             mutex.lock(TPM);
 
-            if(taskDetails->task->timeoutMS()<1 || !keep)
+            if(taskDetails->task->timeoutMS()<1 || runAgain==RunAgain::No)
             {
               tpRemoveOne(tasks, taskDetails);
+
+              {
+                TP_MUTEX_LOCKER(taskStatusMutex);
+                for(size_t i=0; i<taskStatuses.size(); i++)
+                {
+                  if(taskStatuses.at(i).taskID == taskDetails->task->taskID())
+                  {
+                    tpRemoveAt(taskStatuses, i);
+                    break;
+                  }
+                }
+              }
+
               mutex.unlock(TPM);
               TaskStatus taskStatus = taskDetails->task->taskStatus();
               taskStatus.complete = true;
