@@ -38,7 +38,7 @@ void SynchronizationPoint::addTask(Task* task, size_t maxActive)
 {
   task->setSynchronizationPoint(this);
   TP_MUTEX_LOCKER(d->mutex);
-  while(d->count>maxActive)
+  while(d->count>=maxActive)
     d->waitCondition.wait(TPMc d->mutex);
   d->count++;
 }
