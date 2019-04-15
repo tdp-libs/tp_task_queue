@@ -63,7 +63,7 @@ Task::Task(const std::string& taskName, const TaskCallback& performTask, int64_t
 Task::~Task()
 {
   if(d->synchronizationPoint)
-    d->synchronizationPoint->removeTask();
+    d->synchronizationPoint->removeTask(this);
   delete d;
 }
 

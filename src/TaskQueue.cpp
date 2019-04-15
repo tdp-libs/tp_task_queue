@@ -259,22 +259,6 @@ void TaskQueue::setNumberOfTaskThreads(size_t numberOfTaskThreads)
   d->numberOfTaskThreads = numberOfTaskThreads;
   d->addThreads();
   d->waitCondition.wakeAll();
-
-  //This does not work as I thought, at the moment just letting the list fill up should not cause
-  //issues.
-
-  //  //Remove any threads that have completed execution this will be as a result of a previous call to
-  //  //setNumberOfTaskThreads(), not this call.
-  //  for(size_t i=d->threads.size()-1; i<d->threads.size(); i--)
-  //  {
-  //    auto thread = d->threads.at(i);
-  //    if(thread->joinable())
-  //    {
-  //      thread->join();
-  //      delete thread;
-  //      tpRemoveAt(d->threads, i);
-  //    }
-  //  }
 }
 
 //##################################################################################################

@@ -26,9 +26,15 @@ public:
   //################################################################################################
   void addTask(Task* task, size_t maxActive=std::numeric_limits<size_t>::max());
 
+  //################################################################################################
+  void cancelTasks();
+
+  //################################################################################################
+  size_t activeTasks();
+
 private:
   friend class Task;
-  void removeTask();
+  void removeTask(Task* task);
 
   struct Private;
   friend struct Private;

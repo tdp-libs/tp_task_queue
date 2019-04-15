@@ -9,7 +9,7 @@ namespace tp_task_queue
 //##################################################################################################
 struct SynchronizationPoint::Private
 {
-  size_t count{0};
+  std::vector<Task*> tasks;
   TPMutex mutex{TPM};
   TPWaitCondition waitCondition;
 };
@@ -26,7 +26,7 @@ SynchronizationPoint::~SynchronizationPoint()
 {
   {
     TP_MUTEX_LOCKER(d->mutex);
-    while(d->count>0)
+    while(!d->tasks.empty())
       d->waitCondition.wait(TPMc d->mutex);
   }
 
@@ -38,16 +38,31 @@ void SynchronizationPoint::addTask(Task* task, size_t maxActive)
 {
   task->setSynchronizationPoint(this);
   TP_MUTEX_LOCKER(d->mutex);
-  while(d->count>=maxActive)
+  while(d->tasks.size()>=maxActive)
     d->waitCondition.wait(TPMc d->mutex);
-  d->count++;
+  d->tasks.push_back(task);
 }
 
 //##################################################################################################
-void SynchronizationPoint::removeTask()
+void SynchronizationPoint::cancelTasks()
 {
   TP_MUTEX_LOCKER(d->mutex);
-  d->count--;
+  for(auto task : d->tasks)
+    task->cancelTask();
+}
+
+//##################################################################################################
+size_t SynchronizationPoint::activeTasks()
+{
+  TP_MUTEX_LOCKER(d->mutex);
+  return d->tasks.size();
+}
+
+//##################################################################################################
+void SynchronizationPoint::removeTask(Task* task)
+{
+  TP_MUTEX_LOCKER(d->mutex);
+  tpRemoveOne(d->tasks, task);
   d->waitCondition.wakeAll();
 }
 
