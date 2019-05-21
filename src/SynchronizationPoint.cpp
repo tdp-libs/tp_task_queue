@@ -24,13 +24,16 @@ SynchronizationPoint::SynchronizationPoint():
 //##################################################################################################
 SynchronizationPoint::~SynchronizationPoint()
 {
-  {
-    TP_MUTEX_LOCKER(d->mutex);
-    while(!d->tasks.empty())
-      d->waitCondition.wait(TPMc d->mutex);
-  }
-
+  join();
   delete d;
+}
+
+//##################################################################################################
+void SynchronizationPoint::join()
+{
+  TP_MUTEX_LOCKER(d->mutex);
+  while(!d->tasks.empty())
+    d->waitCondition.wait(TPMc d->mutex);
 }
 
 //##################################################################################################
