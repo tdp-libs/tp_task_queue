@@ -56,8 +56,8 @@ struct TaskQueue::Private
   std::atomic_bool finish{false};
 
   //################################################################################################
-  Private(const std::string& threadName_, size_t nThreads):
-    threadName(threadName_),
+  Private(std::string threadName_, size_t nThreads):
+    threadName(std::move(threadName_)),
     numberOfTaskThreads(nThreads)
   {
 

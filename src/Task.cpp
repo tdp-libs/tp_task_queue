@@ -31,9 +31,13 @@ struct Task::Private
   std::atomic_bool paused{false};
 
   //################################################################################################
-  Private(std::string taskName_, const TaskCallback& performTask_, int64_t timeout_, std::string timeoutMessage_, bool pauseable_):
+  Private(std::string taskName_,
+          TaskCallback performTask_,
+          int64_t timeout_,
+          std::string timeoutMessage_,
+          bool pauseable_):
     taskName(std::move(taskName_)),
-    performTask(performTask_),
+    performTask(std::move(performTask_)),
     timeout(timeout_),
     timeoutMessage(std::move(timeoutMessage_)),
     pauseable(pauseable_)
