@@ -16,7 +16,7 @@ namespace
 //##################################################################################################
 struct TaskDetails_lt
 {
-  TDP_REF_COUNT_OBJECTS("TaskDetails_lt");
+  tp_qt_REF_COUNT_OBJECTS("TaskDetails_lt");
   TP_NONCOPYABLE(TaskDetails_lt);
 
   Task* task{nullptr};
