@@ -42,7 +42,7 @@ struct TaskStatus
 //! A task that can be added to a task queue.
 class Task
 {
-  tp_qt_REF_COUNT_OBJECTS("Task");
+  TP_REF_COUNT_OBJECTS("Task");
 public:
 
   //################################################################################################

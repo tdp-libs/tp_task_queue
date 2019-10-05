@@ -15,7 +15,7 @@ class Task;
 //! Waits for tasks to finish before returning from its destructor.
 class SynchronizationPoint
 {
-  tp_qt_REF_COUNT_OBJECTS("SynchronizationPoint");
+  TP_REF_COUNT_OBJECTS("SynchronizationPoint");
 public:
   //################################################################################################
   SynchronizationPoint();
