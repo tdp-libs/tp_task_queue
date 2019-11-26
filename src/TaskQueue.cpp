@@ -36,6 +36,9 @@ struct TaskDetails_lt
 //##################################################################################################
 struct TaskQueue::Private
 {
+  TP_REF_COUNT_OBJECTS("tp_task_queue::TaskQueue::Private");
+  TP_NONCOPYABLE(Private);
+
   std::string threadName;
 
   TPMutex mutex{TPM};

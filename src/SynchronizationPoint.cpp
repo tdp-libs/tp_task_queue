@@ -9,6 +9,10 @@ namespace tp_task_queue
 //##################################################################################################
 struct SynchronizationPoint::Private
 {
+  TP_REF_COUNT_OBJECTS("tp_task_queue::SynchronizationPoint::Private");
+  TP_NONCOPYABLE(Private);
+  Private() = default;
+
   std::vector<Task*> tasks;
   TPMutex mutex{TPM};
   TPWaitCondition waitCondition;

@@ -11,6 +11,9 @@ namespace tp_task_queue
 //##################################################################################################
 struct Task::Private
 {
+  TP_REF_COUNT_OBJECTS("tp_task_queue::Task::Private");
+  TP_NONCOPYABLE(Private);
+
   int64_t taskID{generateTaskID()};
   std::string taskName;
   TaskCallback performTask;
