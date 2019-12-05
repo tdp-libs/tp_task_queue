@@ -1,3 +1,3 @@
-include(../tdp_build/cmake/build_a.cmake)
-tdp_parse_vars()
+include(../tp_build/cmake/build_a.cmake)
+tp_parse_vars()
 
