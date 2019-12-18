@@ -14,3 +14,6 @@ HEADERS += inc/tp_task_queue/Task.h
 
 SOURCES += src/SynchronizationPoint.cpp
 HEADERS += inc/tp_task_queue/SynchronizationPoint.h
+
+SOURCES += src/WorkQueue.cpp
+HEADERS += inc/tp_task_queue/WorkQueue.h
