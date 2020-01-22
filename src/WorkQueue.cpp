@@ -14,7 +14,7 @@ namespace tp_task_queue
 struct WorkQueue::Private
 {
   std::thread thread;
-  TPMutex mutex;
+  TPMutex mutex{TPM};
   TPWaitCondition waitCondition;
   std::queue<std::function<void()>> queue;
   bool finish{false};
@@ -47,7 +47,7 @@ struct WorkQueue::Private
     while(!finish || !queue.empty())
     {
       if(queue.empty())
-        waitCondition.wait(mutex);
+        waitCondition.wait(TPMc mutex);
       else
       {
         auto task = queue.front();
