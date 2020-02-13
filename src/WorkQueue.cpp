@@ -13,11 +13,11 @@ namespace tp_task_queue
 //##################################################################################################
 struct WorkQueue::Private
 {
-  std::thread thread;
   TPMutex mutex{TPM};
   TPWaitCondition waitCondition;
   std::queue<std::function<void()>> queue;
   bool finish{false};
+  std::thread thread;
 
   //################################################################################################
   Private(const std::string& threadName):
