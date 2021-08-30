@@ -42,6 +42,7 @@ struct TaskStatus
 //! A task that can be added to a task queue.
 class Task
 {
+  TP_NONCOPYABLE(Task);
   TP_REF_COUNT_OBJECTS("Task");
 public:
 

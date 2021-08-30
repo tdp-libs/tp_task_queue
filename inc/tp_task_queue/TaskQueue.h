@@ -9,6 +9,7 @@ namespace tp_task_queue
 //##################################################################################################
 class TP_TASK_QUEUE_SHARED_EXPORT TaskQueue
 {
+  TP_NONCOPYABLE(TaskQueue);
 public:
   //################################################################################################
   TaskQueue(const std::string& threadName, size_t nThreads=1);
