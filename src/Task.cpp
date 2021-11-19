@@ -16,7 +16,7 @@ struct Task::Private
 
   int64_t taskID{generateTaskID()};
   std::string taskName;
-  TaskCallback performTask;
+  std::function<RunAgain(Task&)> performTask;
   int64_t timeout;
   std::string timeoutMessage;
 
@@ -35,7 +35,7 @@ struct Task::Private
 
   //################################################################################################
   Private(std::string taskName_,
-          TaskCallback performTask_,
+          const std::function<RunAgain(Task&)>& performTask_,
           int64_t timeout_,
           std::string timeoutMessage_,
           bool pauseable_):
@@ -60,7 +60,7 @@ struct Task::Private
 };
 
 //##################################################################################################
-Task::Task(const std::string& taskName, const TaskCallback& performTask, int64_t timeout, const std::string& timeoutMessage, bool pauseable):
+Task::Task(const std::string& taskName, const std::function<RunAgain(Task&)>& performTask, int64_t timeout, const std::string& timeoutMessage, bool pauseable):
   d(new Private(taskName, performTask, timeout, timeoutMessage, pauseable))
 {
 

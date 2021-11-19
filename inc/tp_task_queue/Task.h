@@ -22,9 +22,6 @@ enum class RunAgain
 };
 
 //##################################################################################################
-using TaskCallback = std::function<RunAgain(Task&)>;
-
-//##################################################################################################
 //! The status of a running task.
 struct TaskStatus
 {
@@ -55,7 +52,7 @@ public:
   \param performTask A function to call to perform the task, return true to rerun the task.
   \param timeoutMS If this is positive the task will be rerun at this interval.
   */
-  Task(const std::string& taskName, const TaskCallback& performTask, int64_t timeoutMS=0, const std::string& timeoutMessage=std::string(), bool pauseable=false);
+  Task(const std::string& taskName, const std::function<RunAgain(Task&)>& performTask, int64_t timeoutMS=0, const std::string& timeoutMessage=std::string(), bool pauseable=false);
 
   //################################################################################################
   ~Task();
