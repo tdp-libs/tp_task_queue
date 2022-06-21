@@ -19,7 +19,7 @@ class SynchronizationPoint
   TP_REF_COUNT_OBJECTS("SynchronizationPoint");
 public:
   //################################################################################################
-  SynchronizationPoint();
+  SynchronizationPoint(const std::function<void()>& taskRemoved={});
 
   //################################################################################################
   ~SynchronizationPoint();

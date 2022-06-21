@@ -11,16 +11,24 @@ struct SynchronizationPoint::Private
 {
   TP_REF_COUNT_OBJECTS("tp_task_queue::SynchronizationPoint::Private");
   TP_NONCOPYABLE(Private);
-  Private() = default;
 
   std::vector<Task*> tasks;
   TPMutex mutex{TPM};
   TPWaitCondition waitCondition;
+
+  std::function<void()> taskRemoved;
+
+  //################################################################################################
+  Private(const std::function<void()>& taskRemoved_):
+    taskRemoved(taskRemoved_)
+  {
+
+  }
 };
 
 //##################################################################################################
-SynchronizationPoint::SynchronizationPoint():
-  d(new Private())
+SynchronizationPoint::SynchronizationPoint(const std::function<void()>& taskRemoved):
+  d(new Private(taskRemoved))
 {
 
 }
@@ -68,9 +76,14 @@ size_t SynchronizationPoint::activeTasks()
 //##################################################################################################
 void SynchronizationPoint::removeTask(Task* task)
 {
-  TP_MUTEX_LOCKER(d->mutex);
-  tpRemoveOne(d->tasks, task);
-  d->waitCondition.wakeAll();
+  {
+    TP_MUTEX_LOCKER(d->mutex);
+    tpRemoveOne(d->tasks, task);
+    d->waitCondition.wakeAll();
+  }
+
+  if(d->taskRemoved)
+    d->taskRemoved();
 }
 
 }
