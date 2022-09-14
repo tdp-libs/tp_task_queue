@@ -1,7 +1,7 @@
 #ifndef tp_task_queue_SynchronizationPoint_h
 #define tp_task_queue_SynchronizationPoint_h
 
-#include "tp_task_queue/Globals.h"
+#include "tp_task_queue/Globals.h"// IWYU pragma: keep
 
 #include "tp_utils/RefCount.h"
 
