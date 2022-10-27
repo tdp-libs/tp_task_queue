@@ -272,7 +272,7 @@ void TaskQueue::addTask(Task* task)
   d->mutex.lock(TPM);
   auto taskDetails = new TaskDetails_lt();
   taskDetails->task = task;
-  taskDetails->nextRun = tp_utils::currentTimeMS();
+  taskDetails->nextRun = tp_utils::currentTimeMS() + task->timeoutMS();
   d->tasks.push_back(taskDetails);
   d->waitCondition.wakeOne();
 
