@@ -43,18 +43,18 @@ SynchronizationPoint::~SynchronizationPoint()
 //##################################################################################################
 void SynchronizationPoint::join()
 {
-  TP_MUTEX_LOCKER(d->mutex);
+  TPMutexLocker lock(d->mutex);
   while(!d->tasks.empty())
-    d->waitCondition.wait(TPMc d->mutex);
+    d->waitCondition.wait(TPMc lock);
 }
 
 //##################################################################################################
 void SynchronizationPoint::addTask(Task* task, size_t maxActive)
 {
   task->setSynchronizationPoint(this);
-  TP_MUTEX_LOCKER(d->mutex);
+  TPMutexLocker lock(d->mutex);
   while(d->tasks.size()>=maxActive)
-    d->waitCondition.wait(TPMc d->mutex);
+    d->waitCondition.wait(TPMc lock);
   d->tasks.push_back(task);
 }
 

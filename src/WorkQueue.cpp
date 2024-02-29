@@ -43,18 +43,18 @@ struct WorkQueue::Private
   {
     lib_platform::setThreadName(threadName);
 
-    TP_MUTEX_LOCKER(mutex);
+    TPMutexLocker lock(mutex);
     while(!finish || !queue.empty())
     {
       if(queue.empty())
-        waitCondition.wait(TPMc mutex);
+        waitCondition.wait(TPMc lock);
       else
       {
         auto task = queue.front();
         queue.pop();
 
         {
-          TP_MUTEX_UNLOCKER(mutex);
+          TP_MUTEX_UNLOCKER(lock);
           task();
         }
       }
