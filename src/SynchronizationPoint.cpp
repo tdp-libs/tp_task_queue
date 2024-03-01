@@ -2,6 +2,7 @@
 #include "tp_task_queue/Task.h"
 
 #include "tp_utils/MutexUtils.h"
+#include "tp_utils/DebugUtils.h"
 
 namespace tp_task_queue
 {
@@ -69,7 +70,9 @@ void SynchronizationPoint::cancelTasks()
 //##################################################################################################
 size_t SynchronizationPoint::activeTasks()
 {
+  tpDebug() << "SynchronizationPoint::activeTasks A";
   TP_MUTEX_LOCKER(d->mutex);
+  tpDebug() << "SynchronizationPoint::activeTasks B";
   return d->tasks.size();
 }
 
