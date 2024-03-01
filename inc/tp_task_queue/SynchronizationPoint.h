@@ -19,6 +19,10 @@ class SynchronizationPoint
   TP_REF_COUNT_OBJECTS("SynchronizationPoint");
 public:
   //################################################################################################
+  /*!
+  The taskRemoved callback must be thread safe and can't call addTask directly as it is being called
+  from a task thread.
+  */
   SynchronizationPoint(const std::function<void()>& taskRemoved={});
 
   //################################################################################################
