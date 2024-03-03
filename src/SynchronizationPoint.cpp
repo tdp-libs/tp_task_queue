@@ -70,9 +70,7 @@ void SynchronizationPoint::cancelTasks()
 //##################################################################################################
 size_t SynchronizationPoint::activeTasks()
 {
-  tpDebug() << "SynchronizationPoint::activeTasks A";
   TP_MUTEX_LOCKER(d->mutex);
-  tpDebug() << "SynchronizationPoint::activeTasks B";
   return d->tasks.size();
 }
 
