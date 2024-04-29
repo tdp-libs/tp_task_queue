@@ -43,6 +43,7 @@ class Task
 {
   TP_NONCOPYABLE(Task);
   TP_REF_COUNT_OBJECTS("Task");
+  TP_DQ;
 public:
 
   //################################################################################################
@@ -122,10 +123,6 @@ public:
 private:
   friend class SynchronizationPoint;
   void setSynchronizationPoint(SynchronizationPoint* synchronizationPoint);
-
-  struct Private;
-  friend struct Private;
-  Private* d;
 };
 
 }

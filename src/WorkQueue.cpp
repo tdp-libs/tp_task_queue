@@ -1,4 +1,7 @@
 #include "tp_task_queue/WorkQueue.h"
+#include "tp_task_queue/TaskQueue.h"
+#include "tp_task_queue/Task.h"
+#include "tp_task_queue/SynchronizationPoint.h"
 
 #include "tp_utils/MutexUtils.h"
 
@@ -13,15 +16,30 @@ namespace tp_task_queue
 //##################################################################################################
 struct WorkQueue::Private
 {
+  std::string taskName;
+  TaskQueue* taskQueue{nullptr};
+
   TPMutex mutex{TPM};
   TPWaitCondition waitCondition;
   std::queue<std::function<void()>> queue;
   bool finish{false};
-  std::thread thread;
+
+  std::unique_ptr<std::thread> thread;
+
+  int activeTask{false};
+  SynchronizationPoint synchronizationPoint;
 
   //################################################################################################
   Private(const std::string& threadName):
-    thread([=]{run(threadName);})
+    thread(new std::thread([=]{run(threadName);}))
+  {
+
+  }
+
+  //################################################################################################
+  Private(const std::string& taskName_, TaskQueue* taskQueue_):
+    taskName(taskName_),
+    taskQueue(taskQueue_)
   {
 
   }
@@ -35,7 +53,11 @@ struct WorkQueue::Private
       waitCondition.wakeAll();
     }
 
-    thread.join();
+    if(thread)
+      thread->join();
+
+    synchronizationPoint.cancelTasks();
+    synchronizationPoint.join();
   }
 
   //################################################################################################
@@ -60,11 +82,46 @@ struct WorkQueue::Private
       }
     }
   }
+
+  //################################################################################################
+  void addNextTask()
+  {
+    if(queue.empty())
+      return;
+
+    activeTask = true;
+
+    auto task = queue.front();
+    queue.pop();
+
+    auto t = new Task(taskName, [=](Task&)
+    {
+      task();
+
+      {
+        TP_MUTEX_LOCKER(mutex);
+        activeTask = false;
+        addNextTask();
+      }
+
+      return RunAgain::No;
+    });
+    synchronizationPoint.addTask(t);
+    taskQueue->addTask(t);
+  }
 };
 
 //##################################################################################################
 WorkQueue::WorkQueue(const std::string& threadName):
   d(new Private(threadName))
+{
+
+}
+
+
+//##################################################################################################
+WorkQueue::WorkQueue(const std::string& taskName, TaskQueue* taskQueue):
+  d(new Private(taskName, taskQueue))
 {
 
 }
@@ -81,6 +138,9 @@ void WorkQueue::addTask(const std::function<void()>& task)
   TP_MUTEX_LOCKER(d->mutex);
   d->queue.push(task);
   d->waitCondition.wakeOne();
+
+  if(d->taskQueue && !d->activeTask)
+    d->addNextTask();
 }
 
 }
