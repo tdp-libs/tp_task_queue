@@ -10,6 +10,7 @@ namespace tp_task_queue
 class TP_TASK_QUEUE_EXPORT TaskQueue
 {
   TP_NONCOPYABLE(TaskQueue);
+  TP_DQ;
 public:
   //################################################################################################
   TaskQueue(const std::string& threadName, size_t nThreads=1);
@@ -58,11 +59,6 @@ public:
 
   //################################################################################################
   void removeStatusChangedCallback(const std::function<void()>* statusChangedCallback);
-
-private:
-  struct Private;
-  friend struct Private;
-  Private* d;
 };
 
 }

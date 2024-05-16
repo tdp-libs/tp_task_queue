@@ -17,6 +17,7 @@ class SynchronizationPoint
 {
   TP_NONCOPYABLE(SynchronizationPoint);
   TP_REF_COUNT_OBJECTS("SynchronizationPoint");
+  TP_DQ;
 public:
   //################################################################################################
   /*!
@@ -43,10 +44,6 @@ public:
 private:
   friend class Task;
   void removeTask(Task* task);
-
-  struct Private;
-  friend struct Private;
-  Private* d;
 };
 
 }

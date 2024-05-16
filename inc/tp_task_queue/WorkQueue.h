@@ -14,6 +14,7 @@ class TaskQueue;
 class TP_TASK_QUEUE_EXPORT WorkQueue
 {
   TP_NONCOPYABLE(WorkQueue);
+  TP_DQ;
 public:
   //################################################################################################
   WorkQueue(const std::string& threadName);
@@ -27,11 +28,6 @@ public:
   //################################################################################################
   //! Add a task to the queue to be processed.
   void addTask(const std::function<void()>& task);
-
-private:
-  struct Private;
-  friend struct Private;
-  Private* d;
 };
 
 }
