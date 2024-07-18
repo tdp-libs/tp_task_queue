@@ -46,6 +46,9 @@ struct TaskQueue::Private
   TPWaitCondition updateWaitingMessagesWaitCondition;
   TPWaitCondition threadFinishedWaitCondition;
   std::vector<TaskDetails_lt*> tasks;
+  size_t nextTaskIndex{0};
+  bool workDone{false};
+  int64_t waitFor{INT64_MAX};
 
   TPMutex taskStatusMutex{TPM};
   std::vector<TaskStatus> taskStatuses;
@@ -128,10 +131,11 @@ struct TaskQueue::Private
           if(numberOfActiveTaskThreads>numberOfTaskThreads)
             break;
 
-          bool workDone = false;
-          int64_t waitFor = INT64_MAX;
-          for(TaskDetails_lt* taskDetails : tasks)
+          if(nextTaskIndex<tasks.size())
           {
+            TaskDetails_lt* taskDetails = tasks.at(nextTaskIndex);
+            nextTaskIndex++;
+
             if(taskDetails->active)
               continue;
 
@@ -155,7 +159,15 @@ struct TaskQueue::Private
 
             if(taskDetails->task->timeoutMS()<1 || runAgain==RunAgain::No)
             {
-              tpRemoveOne(tasks, taskDetails);
+              {
+                auto i = std::find(tasks.begin(), tasks.end(), taskDetails);
+                if(i != tasks.end())
+                {
+                  if((i-tasks.begin())<ptrdiff_t(nextTaskIndex))
+                    nextTaskIndex--;
+                  tasks.erase(i);
+                }
+              }
 
               {
                 TP_MUTEX_LOCKER(taskStatusMutex);
@@ -182,11 +194,20 @@ struct TaskQueue::Private
                 taskDetails->nextRun = tp_utils::currentTimeMS() + taskDetails->task->timeoutMS();
               taskDetails->active = false;
             }
-            break;
           }
 
-          if(!workDone)
-            waitCondition.wait(TPMc lock, waitFor);
+          if(nextTaskIndex>=tasks.size())
+          {
+            nextTaskIndex = 0;
+
+            auto w = waitFor;
+            waitFor = INT64_MAX;
+
+            if(!workDone)
+              waitCondition.wait(TPMc lock, w);
+            else
+              workDone = false;
+          }
         }
         numberOfActiveTaskThreads--;
         threadFinishedWaitCondition.wakeAll();
