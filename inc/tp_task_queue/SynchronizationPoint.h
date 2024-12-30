@@ -1,7 +1,7 @@
 #ifndef tp_task_queue_SynchronizationPoint_h
 #define tp_task_queue_SynchronizationPoint_h
 
-#include "tp_task_queue/Globals.h"
+#include "tp_task_queue/Globals.h"// IWYU pragma: keep
 
 #include "tp_utils/RefCount.h"
 
@@ -17,9 +17,14 @@ class SynchronizationPoint
 {
   TP_NONCOPYABLE(SynchronizationPoint);
   TP_REF_COUNT_OBJECTS("SynchronizationPoint");
+  TP_DQ;
 public:
   //################################################################################################
-  SynchronizationPoint();
+  /*!
+  The taskRemoved callback must be thread safe and can't call addTask directly as it is being called
+  from a task thread.
+  */
+  SynchronizationPoint(const std::function<void()>& taskRemoved={});
 
   //################################################################################################
   ~SynchronizationPoint();
@@ -34,15 +39,14 @@ public:
   void cancelTasks();
 
   //################################################################################################
+  bool cancelTasksCalled() const;
+
+  //################################################################################################
   size_t activeTasks();
 
 private:
   friend class Task;
   void removeTask(Task* task);
-
-  struct Private;
-  friend struct Private;
-  Private* d;
 };
 
 }

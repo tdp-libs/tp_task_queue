@@ -1,10 +1,9 @@
 #ifndef tp_task_queue_Task_h
 #define tp_task_queue_Task_h
 
-#include "tp_task_queue/Globals.h"
+#include "tp_task_queue/Globals.h" // IWYU pragma: keep
 
 #include "tp_utils/RefCount.h"
-#include "tp_utils/MutexUtils.h"
 
 #include <string>
 
@@ -15,11 +14,7 @@ class TaskQueue;
 class SynchronizationPoint;
 
 //##################################################################################################
-enum class RunAgain
-{
-  Yes,
-  No
-};
+using TaskCallback = std::function<RunAgain(Task&)>;
 
 //##################################################################################################
 //! The status of a running task.
@@ -41,6 +36,7 @@ class Task
 {
   TP_NONCOPYABLE(Task);
   TP_REF_COUNT_OBJECTS("Task");
+  TP_DQ;
 public:
 
   //################################################################################################
@@ -120,10 +116,6 @@ public:
 private:
   friend class SynchronizationPoint;
   void setSynchronizationPoint(SynchronizationPoint* synchronizationPoint);
-
-  struct Private;
-  friend struct Private;
-  Private* d;
 };
 
 }

@@ -46,6 +46,9 @@ struct TaskQueue::Private
   TPWaitCondition updateWaitingMessagesWaitCondition;
   TPWaitCondition threadFinishedWaitCondition;
   std::vector<TaskDetails_lt*> tasks;
+  size_t nextTaskIndex{0};
+  bool workDone{false};
+  int64_t waitFor{INT64_MAX};
 
   TPMutex taskStatusMutex{TPM};
   std::vector<TaskStatus> taskStatuses;
@@ -79,34 +82,35 @@ struct TaskQueue::Private
   {
     bool changed = false;
 
-    mutex.lock(TPM);
-    for(TaskDetails_lt* taskDetails : tasks)
     {
-      if(!taskDetails->active && (taskDetails->nextRun>0 || taskDetails->task->paused()))
+      TP_MUTEX_LOCKER(mutex);
+      for(TaskDetails_lt* taskDetails : tasks)
       {
-        int64_t timeToRun = taskDetails->nextRun - tp_utils::currentTimeMS();
-        if(timeToRun<0)
-          taskDetails->nextRun=0;
-        timeToRun = tpMax(int64_t(0), timeToRun/1000);
-        taskStatusMutex.lock(TPM);
-        for(TaskStatus& ts : taskStatuses)
+        if(!taskDetails->active && (taskDetails->nextRun>0 || taskDetails->task->paused()))
         {
-          if(ts.taskID == taskDetails->task->taskID())
+          int64_t timeToRun = taskDetails->nextRun - tp_utils::currentTimeMS();
+          if(timeToRun<0)
+            taskDetails->nextRun=0;
+          timeToRun = tpMax(int64_t(0), timeToRun/1000);
+          taskStatusMutex.lock(TPM);
+          for(TaskStatus& ts : taskStatuses)
           {
-            if(ts.paused)
-              ts.message = "Paused.";
-            else if(timeToRun==0)
-              ts.message = "Waiting for thread.";
-            else
-              ts.message = taskDetails->task->timeoutMessage() + std::to_string(timeToRun);
-            changed = true;
-            break;
+            if(ts.taskID == taskDetails->task->taskID())
+            {
+              if(ts.paused)
+                ts.message = "Paused.";
+              else if(timeToRun==0)
+                ts.message = "Waiting for thread.";
+              else
+                ts.message = taskDetails->task->timeoutMessage() + std::to_string(timeToRun);
+              changed = true;
+              break;
+            }
           }
+          taskStatusMutex.unlock(TPM);
         }
-        taskStatusMutex.unlock(TPM);
       }
     }
-    mutex.unlock(TPM);
 
     if(changed)
       taskStatusChanged();
@@ -121,16 +125,17 @@ struct TaskQueue::Private
       std::thread thread([&]()
       {
         lib_platform::setThreadName(threadName);
-        mutex.lock(TPM);
+        TPMutexLocker lock(mutex);
         while(!finish)
         {
           if(numberOfActiveTaskThreads>numberOfTaskThreads)
             break;
 
-          bool workDone = false;
-          int64_t waitFor = INT64_MAX;
-          for(TaskDetails_lt* taskDetails : tasks)
+          if(nextTaskIndex<tasks.size())
           {
+            TaskDetails_lt* taskDetails = tasks.at(nextTaskIndex);
+            nextTaskIndex++;
+
             if(taskDetails->active)
               continue;
 
@@ -147,14 +152,22 @@ struct TaskQueue::Private
 
             taskDetails->active = true;
 
-            mutex.unlock(TPM);
+            lock.unlock(TPM);
             workDone = true;
             auto runAgain = taskDetails->task->performTask();
-            mutex.lock(TPM);
+            lock.lock(TPM);
 
             if(taskDetails->task->timeoutMS()<1 || runAgain==RunAgain::No)
             {
-              tpRemoveOne(tasks, taskDetails);
+              {
+                auto i = std::find(tasks.begin(), tasks.end(), taskDetails);
+                if(i != tasks.end())
+                {
+                  if((i-tasks.begin())<ptrdiff_t(nextTaskIndex))
+                    nextTaskIndex--;
+                  tasks.erase(i);
+                }
+              }
 
               {
                 TP_MUTEX_LOCKER(taskStatusMutex);
@@ -168,12 +181,12 @@ struct TaskQueue::Private
                 }
               }
 
-              mutex.unlock(TPM);
+              lock.unlock(TPM);
               TaskStatus taskStatus = taskDetails->task->taskStatus();
               taskStatus.complete = true;
               taskDetails->task->updateTaskStatus(taskStatus);
               delete taskDetails;
-              mutex.lock(TPM);
+              lock.lock(TPM);
             }
             else
             {
@@ -181,15 +194,23 @@ struct TaskQueue::Private
                 taskDetails->nextRun = tp_utils::currentTimeMS() + taskDetails->task->timeoutMS();
               taskDetails->active = false;
             }
-            break;
           }
 
-          if(!workDone)
-            waitCondition.wait(TPMc mutex, waitFor);
+          if(nextTaskIndex>=tasks.size())
+          {
+            nextTaskIndex = 0;
+
+            auto w = waitFor;
+            waitFor = INT64_MAX;
+
+            if(!workDone)
+              waitCondition.wait(TPMc lock, w);
+            else
+              workDone = false;
+          }
         }
         numberOfActiveTaskThreads--;
         threadFinishedWaitCondition.wakeAll();
-        mutex.unlock(TPM);
       });
 
       thread.detach();
@@ -208,15 +229,15 @@ TaskQueue::TaskQueue(const std::string& threadName, size_t nThreads):
   {
     lib_platform::setThreadName("#"+d->threadName);
 
-    d->mutex.lock(TPM);
+    TPMutexLocker lock(d->mutex);
     while(!d->finish)
     {
-      d->updateWaitingMessagesWaitCondition.wait(TPMc d->mutex, 1000);
-      d->mutex.unlock(TPM);
-      d->updateWaitingMessages();
-      d->mutex.lock(TPM);
+      d->updateWaitingMessagesWaitCondition.wait(TPMc lock, 1000);
+      {
+        TP_MUTEX_UNLOCKER(lock);
+        d->updateWaitingMessages();
+      }
     }
-    d->mutex.unlock(TPM);
   });
 }
 
@@ -226,23 +247,21 @@ TaskQueue::~TaskQueue()
   d->finish = true;
 
   {
-    d->mutex.lock(TPM);
+    TPMutexLocker lock(d->mutex);
     for(TaskDetails_lt* taskDetails : d->tasks)
       taskDetails->task->cancelTask();
     d->waitCondition.wakeAll();
     while(d->numberOfActiveTaskThreads>0)
-      d->threadFinishedWaitCondition.wait(TPMc d->mutex);
-    d->mutex.unlock(TPM);
+      d->threadFinishedWaitCondition.wait(TPMc lock);
   }
 
   d->adminThread->join();
   d->adminThread.reset();
 
   {
-    d->mutex.lock(TPM);
+    TP_MUTEX_LOCKER(d->mutex);
     for(TaskDetails_lt* taskDetails : d->tasks)
       delete taskDetails;
-    d->mutex.unlock(TPM);
   }
 
   delete d;
@@ -269,10 +288,10 @@ void TaskQueue::addTask(Task* task)
 {
   task->setTaskQueue(this);
 
-  d->mutex.lock(TPM);
+  TP_MUTEX_LOCKER(d->mutex);
   auto taskDetails = new TaskDetails_lt();
   taskDetails->task = task;
-  taskDetails->nextRun = tp_utils::currentTimeMS();
+  taskDetails->nextRun = tp_utils::currentTimeMS() + task->timeoutMS();
   d->tasks.push_back(taskDetails);
   d->waitCondition.wakeOne();
 
@@ -296,7 +315,6 @@ void TaskQueue::addTask(Task* task)
     d->taskStatusMutex.unlock(TPM);
     d->taskStatusChanged();
   });
-  d->mutex.unlock(TPM);
   d->taskStatusChanged();
 }
 
